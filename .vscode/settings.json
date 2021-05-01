@@ -1,0 +1,18 @@
+{
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/main/csel/astgen",
+        "${workspaceFolder}/main/csel/checker",
+        "${workspaceFolder}/main/csel/parser",
+        "${workspaceFolder}/main/csel/utils",
+        "${workspaceFolder}/test",
+        "${workspaceFolder}/../target/main/csel/parser"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/main/csel/astgen",
+        "${workspaceFolder}/main/csel/checker",
+        "${workspaceFolder}/main/csel/parser",
+        "${workspaceFolder}/main/csel/utils",
+        "${workspaceFolder}/test",
+        "${workspaceFolder}/../target/main/csel/parser"
+    ]
+}
