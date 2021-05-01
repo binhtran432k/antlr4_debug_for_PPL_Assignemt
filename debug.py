@@ -1,16 +1,17 @@
 import sys, os
 from subprocess import Popen, PIPE
+import traceback
+import importlib.util
 
 rootPath = os.getcwd()
 customEnv = os.environ.copy()
 customEnv["ANTLR_JAR"] = rootPath + "/antlr-4.8-complete.jar"
 
-locpath = ['./main/csel/parser/','./main/csel/astgen/','./main/csel/utils/']
+locpath = ['./main/csel/parser/','./main/csel/astgen/','./main/csel/utils/','./test/','../target/main/csel/parser']
 for p in locpath:
     if not p in sys.path:
         sys.path.append(p)
 # import AST if exists
-import importlib.util
 if importlib.util.find_spec('AST') is not None:
     from AST import *
 
@@ -47,7 +48,7 @@ def main(argv):
     elif argv[0] in ['ast','onlyast']:
         if argv[0] == 'ast':
             Popen(["python","run.py","gen"], env=customEnv).wait()
-        test("ASTGenSuite")
+        test("ASTGenSuite",notUseRun=False)
     else:
         printUsage()
 
@@ -57,20 +58,32 @@ class unittest:
             if check != "":
                 print(check)
 
-def checkCommon(inputStr, expectStr, testcase):
-    outputStr = ""
-    with open(rootPath + "/test/solutions/" + str(testcase) + ".txt") as f:
-        outputStr = f.read()
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def checkCommon(inputStr, expectStr, testcase, outputStr=None):
+    if outputStr == None:
+        outputStr = ""
+        with open(rootPath + "/test/solutions/" + str(testcase) + ".txt") as f:
+            outputStr = f.read()
     if outputStr == expectStr:
         return ""
     else:
         output = "-----------------Testcase " + str(testcase) + "------------------\n"
-        output += "Input:\n"
+        output += bcolors.HEADER + "Input:\n" + bcolors.ENDC
         output += inputStr + "\n"
-        output += "Output:\n"
-        output += outputStr + "\n"
-        output += "Expect:\n"
-        output += expectStr + "\n"
+        output += bcolors.HEADER + "Output:\n" + bcolors.ENDC
+        output += bcolors.FAIL + outputStr + "\n" + bcolors.ENDC
+        output += bcolors.HEADER + "Expect:\n" + bcolors.ENDC
+        output += bcolors.WARNING + expectStr + "\n" + bcolors.ENDC
         output += "=================================================\n"
         return output
 
@@ -87,24 +100,33 @@ class TestParser:
 class TestAST:
     @staticmethod
     def checkASTGen(inputStr, expectStr, testcase):
+        from TestUtils import TestAST as realTestAST
+        try:
+            realTestAST.checkASTGen(inputStr, expectStr, testcase)
+        except Exception as e:
+            track = traceback.format_exc()
+            return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
         return checkCommon(inputStr, str(expectStr), testcase)
 
-def test(testName, useAsRun=False):
-    # generate solution
-    if useAsRun:
-        Popen(["python","run.py","test",testName], env=customEnv).wait()
-        return
-    testLog = Popen(["python","run.py","test",testName], env=customEnv, stdout=PIPE, stderr=PIPE)
-    out, err = testLog.communicate()
-    testLog.wait()
-    if err:
-        print(err.decode('utf-8'))
-        return
-    # write log
-    with open(rootPath + "/" + testName + ".log", "wb") as f:
-        f.write(out)
-    # store log
-    logStr = out.decode('utf-8').splitlines()
+def test(testName, useAsRun=False, notUseRun=True):
+    if notUseRun:
+        # generate solution
+        if useAsRun:
+            Popen(["python","run.py","test",testName], env=customEnv).wait()
+            return
+        testLog = Popen(["python","run.py","test",testName], env=customEnv, stdout=PIPE, stderr=PIPE)
+        out, err = testLog.communicate()
+        testLog.wait()
+        if err:
+            print(err.decode('utf-8'))
+            return
+        # write log
+        with open(rootPath + "/" + testName + ".log", "wb") as f:
+            f.write(out)
+        # store log
+        logStr = out.decode('utf-8').splitlines()
+    else:
+        logStr = [""]
     testSuiteClass = "class " + testName + ": pass"
     with open(rootPath + "/test/" + testName + ".py") as f:
         s = f.read()
@@ -114,20 +136,26 @@ def test(testName, useAsRun=False):
     testSuite = eval(testName+"()")
     testList = [method for method in dir(eval(testName)) if method.startswith("test") is True]
     # print test debug
-    runtime = logStr[-5:-1]
+    runtime = logStr[-4:-1]
     success = False
     for line in runtime:
         if line.find("OK") != -1:
             success = True
             break
-    if success:
-        print("FAILED TESTCASE LIST")
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    if not success:
+        print(bcolors.FAIL+"FAILED TESTCASE LIST")
+        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"+bcolors.ENDC)
     for test in testList:
-        funcTest = getattr(testSuite, test)()
+        getattr(testSuite, test)()
     # print runtime
+    if success:
+        print(bcolors.OKGREEN, end='')
+    else:
+        print(bcolors.FAIL, end='')
+        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     for line in runtime:
         print(line)
+    print(bcolors.ENDC, end='')
 
 def printUsage():
     print("python debug.py gen")

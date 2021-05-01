@@ -14,5 +14,6 @@
         "${workspaceFolder}/main/csel/utils",
         "${workspaceFolder}/test",
         "${workspaceFolder}/../target/main/csel/parser"
-    ]
+    ],
+    "debug.terminal.clearBeforeReusing": true
 }
