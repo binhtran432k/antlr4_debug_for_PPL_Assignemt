@@ -1,10 +1,18 @@
 import sys, os
 from subprocess import Popen, PIPE
-from antlr4enviroment.AST import *
 
 rootPath = os.getcwd()
 customEnv = os.environ.copy()
-customEnv["ANTLR_JAR"] = rootPath + "/antlr4enviroment/antlr-4.8-complete.jar"
+customEnv["ANTLR_JAR"] = rootPath + "/antlr-4.8-complete.jar"
+
+locpath = ['./main/csel/parser/','./main/csel/astgen/','./main/csel/utils/']
+for p in locpath:
+    if not p in sys.path:
+        sys.path.append(p)
+# import AST if exists
+import importlib.util
+if importlib.util.find_spec('AST') is not None:
+    from AST import *
 
 def main(argv):
     if len(argv) != 1:
