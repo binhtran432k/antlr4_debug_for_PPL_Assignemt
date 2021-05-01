@@ -48,7 +48,7 @@ def main(argv):
     elif argv[0] in ['ast','onlyast']:
         if argv[0] == 'ast':
             Popen(["python","run.py","gen"], env=customEnv).wait()
-        test("ASTGenSuite",notUseRun=False)
+        test("ASTGenSuite",notUseRun=True)
     else:
         printUsage()
 
@@ -108,8 +108,8 @@ class TestAST:
             return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
         return checkCommon(inputStr, str(expectStr), testcase)
 
-def test(testName, useAsRun=False, notUseRun=True):
-    if notUseRun:
+def test(testName, useAsRun=False, notUseRun=False):
+    if not notUseRun:
         # generate solution
         if useAsRun:
             Popen(["python","run.py","test",testName], env=customEnv).wait()
