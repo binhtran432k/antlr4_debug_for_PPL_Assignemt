@@ -9,18 +9,18 @@ def main(argv):
     if len(argv) != 1:
         printUsage()
     elif argv[0] == 'gen':
-        Popen(["python3","run.py","gen"], env=customEnv).wait()
+        Popen(["python","run.py","gen"], env=customEnv).wait()
     elif argv[0] == 'clean':
-        Popen(["python3","run.py","clean"], env=customEnv).wait()
+        Popen(["python","run.py","clean"], env=customEnv).wait()
         Popen(["rm","-rf","./LexerSuite.log"])
         Popen(["rm","-rf","./ParserSuite.log"])
     elif argv[0] in ['lexer','onlylexer']:
         if argv[0] == 'lexer':
-            Popen(["python3","run.py","gen"], env=customEnv).wait()
+            Popen(["python","run.py","gen"], env=customEnv).wait()
         test("LexerSuite")
     elif argv[0] in ['parser','onlyparser']:
         if argv[0] == 'parser':
-            Popen(["python3","run.py","gen"], env=customEnv).wait()
+            Popen(["python","run.py","gen"], env=customEnv).wait()
         test("ParserSuite")
     else:
         printUsage()
@@ -71,7 +71,7 @@ class TestParser:
 
 def test(testName):
     # generate solution
-    testLog = Popen(["python3","run.py","test",testName], env=customEnv, stdout=PIPE, stderr=PIPE)
+    testLog = Popen(["python","run.py","test",testName], env=customEnv, stdout=PIPE, stderr=PIPE)
     out, err = testLog.communicate()
     testLog.wait()
     if err:
@@ -101,12 +101,12 @@ def test(testName):
         print(line)
 
 def printUsage():
-    print("python3 debug.py gen")
-    print("python3 debug.py lexer")
-    print("python3 debug.py onlylexer")
-    print("python3 debug.py parser")
-    print("python3 debug.py onlyparser")
-    print("python3 debug.py clean")
+    print("python debug.py gen")
+    print("python debug.py lexer")
+    print("python debug.py onlylexer")
+    print("python debug.py parser")
+    print("python debug.py onlyparser")
+    print("python debug.py clean")
 
 if __name__ == "__main__":
    main(sys.argv[1:])

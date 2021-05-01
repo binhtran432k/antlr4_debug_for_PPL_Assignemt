@@ -1,12 +1,12 @@
 gen:
-	python3 debug.py gen
+	python debug.py gen
 lexer:
-	@python3 debug.py lexer
+	@python debug.py lexer
 onlylexer:
-	@python3 debug.py onlylexer
+	@python debug.py onlylexer
 parser:
-	@python3 debug.py parser
+	@python debug.py parser
 onlyparser:
-	@python3 debug.py onlyparser
+	@python debug.py onlyparser
 clean:
-	python3 debug.py clean
+	python debug.py clean
