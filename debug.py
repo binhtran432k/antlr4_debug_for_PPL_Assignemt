@@ -1,7 +1,9 @@
 import sys, os
-from subprocess import Popen, PIPE
+from subprocess import Popen
 import traceback
 import importlib.util
+import time
+import re
 
 rootPath = os.getcwd()
 customEnv = os.environ.copy()
@@ -14,6 +16,9 @@ for p in locpath:
 # import AST if exists
 if importlib.util.find_spec('AST') is not None:
     from AST import *
+# import TestUtils if exists
+if importlib.util.find_spec('TestUtils') is not None:
+    import TestUtils as RealTest
 
 def main(argv):
     if len(argv) != 1:
@@ -38,25 +43,39 @@ def main(argv):
         Popen(["rm","-rf","./ParserSuite.log"])
         Popen(["rm","-rf","./ASTGenSuite.log"])
     elif argv[0] in ['lexer','onlylexer']:
+        testName = "LexerSuite"
         if argv[0] == 'lexer':
             Popen(["python","run.py","gen"], env=customEnv).wait()
-        test("LexerSuite")
+            Popen(["python","debug.py","onlylexer"]).wait()
+        else:
+            test(testName)
     elif argv[0] in ['parser','onlyparser']:
+        testName = "ParserSuite"
         if argv[0] == 'parser':
             Popen(["python","run.py","gen"], env=customEnv).wait()
-        test("ParserSuite")
+            Popen(["python","debug.py","onlyparser"]).wait()
+        else:
+            test(testName)
     elif argv[0] in ['ast','onlyast']:
+        testName = "ASTGenSuite"
         if argv[0] == 'ast':
             Popen(["python","run.py","gen"], env=customEnv).wait()
-        test("ASTGenSuite",notUseRun=True)
+            Popen(["python","debug.py","onlyast"]).wait()
+        else:
+            test(testName)
     else:
         printUsage()
 
 class unittest:
     class TestCase:
+        unitCount = 0
+        successCount = 0
         def assertTrue(self, check):
-            if check != "":
+            unittest.TestCase.unitCount += 1
+            if check != None:
                 print(check)
+            else:
+                unittest.TestCase.successCount += 1
 
 class bcolors:
     HEADER = '\033[95m'
@@ -75,7 +94,7 @@ def checkCommon(inputStr, expectStr, testcase, outputStr=None):
         with open(rootPath + "/test/solutions/" + str(testcase) + ".txt") as f:
             outputStr = f.read()
     if outputStr == expectStr:
-        return ""
+        return None
     else:
         output = "-----------------Testcase " + str(testcase) + "------------------\n"
         output += bcolors.HEADER + "Input:\n" + bcolors.ENDC
@@ -90,43 +109,49 @@ def checkCommon(inputStr, expectStr, testcase, outputStr=None):
 class TestLexer:
     @staticmethod
     def checkLexeme(inputStr, expectStr, testcase):
+        try:
+            RealTest.TestLexer.checkLexeme(inputStr, expectStr, testcase)
+        except:
+            track = traceback.format_exc()
+            return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
         return checkCommon(inputStr, expectStr, testcase)
 
 class TestParser:
     @staticmethod
     def checkParser(inputStr, expectStr, testcase):
+        try:
+            RealTest.TestParser.checkParser(inputStr, expectStr, testcase)
+        except:
+            track = traceback.format_exc()
+            return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
         return checkCommon(inputStr, expectStr, testcase)
 
 class TestAST:
     @staticmethod
     def checkASTGen(inputStr, expectStr, testcase):
-        from TestUtils import TestAST as realTestAST
         try:
-            realTestAST.checkASTGen(inputStr, expectStr, testcase)
-        except Exception as e:
+            RealTest.TestAST.checkASTGen(inputStr, expectStr, testcase)
+        except:
             track = traceback.format_exc()
             return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
         return checkCommon(inputStr, str(expectStr), testcase)
 
-def test(testName, useAsRun=False, notUseRun=False):
-    if not notUseRun:
-        # generate solution
-        if useAsRun:
-            Popen(["python","run.py","test",testName], env=customEnv).wait()
-            return
-        testLog = Popen(["python","run.py","test",testName], env=customEnv, stdout=PIPE, stderr=PIPE)
-        out, err = testLog.communicate()
-        testLog.wait()
-        if err:
-            print(err.decode('utf-8'))
-            return
-        # write log
-        with open(rootPath + "/" + testName + ".log", "wb") as f:
-            f.write(out)
-        # store log
-        logStr = out.decode('utf-8').splitlines()
-    else:
-        logStr = [""]
+def test(testName, useAsRun=False):
+    if useAsRun:
+        log = open(testName+".log","w")
+        Popen(["python","run.py","test",testName], stdout=log, env=customEnv).wait()
+        log.close()
+        log = open(testName+".log","r")
+        print(log.read())
+        log.close()
+        return
+    oldStdout = sys.stdout
+    log = open(testName+".log","w")
+    sys.stdout = log
+
+    start = time.time()
+    unittest.TestCase.unitCount = 0
+    unittest.TestCase.successCount = 0
     testSuiteClass = "class " + testName + ": pass"
     with open(rootPath + "/test/" + testName + ".py") as f:
         s = f.read()
@@ -136,34 +161,44 @@ def test(testName, useAsRun=False, notUseRun=False):
     testSuite = eval(testName+"()")
     testList = [method for method in dir(eval(testName)) if method.startswith("test") is True]
     # print test debug
-    runtime = logStr[-4:-1]
-    success = False
-    for line in runtime:
-        if line.find("OK") != -1:
-            success = True
-            break
-    if not success:
-        print(bcolors.FAIL+"FAILED TESTCASE LIST")
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"+bcolors.ENDC)
     for test in testList:
         getattr(testSuite, test)()
+    end = time.time()
     # print runtime
-    if success:
+    errorCount = unittest.TestCase.unitCount - unittest.TestCase.successCount
+    if errorCount == 0:
         print(bcolors.OKGREEN, end='')
     else:
         print(bcolors.FAIL, end='')
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    for line in runtime:
-        print(line)
+        print("------------------------------------------------------------------")
+    print("Ran "+str(unittest.TestCase.unitCount)+" test in "+"{0:.3f}s".format(end-start))
+    print()
+    if errorCount == 0:
+        print("OK")
+    else:
+        print("FAILED (errors="+str(errorCount)+")")
     print(bcolors.ENDC, end='')
+
+    log.close()
+    sys.stdout = oldStdout
+    log = open(testName+".log","r")
+    logPrint = log.read()
+    print(logPrint)
+    log.close()
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    result = ansi_escape.sub('', logPrint)
+    log = open(testName+".log","w")
+    log.write(result)
+    log.close()
+
 
 def printUsage():
     print("python debug.py gen")
     print("python debug.py lexer")
-    print("python debug.py onlylexer")
     print("python debug.py parser")
-    print("python debug.py onlyparser")
     print("python debug.py ast")
+    print("python debug.py onlylexer")
+    print("python debug.py onlyparser")
     print("python debug.py onlyast")
     print("python debug.py clean")
     print("python debug.py test LexerSuite")
@@ -171,4 +206,4 @@ def printUsage():
     print("python debug.py test ASTGenSuite")
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+    main(sys.argv[1:])
