@@ -1,9 +1,5 @@
-import sys, os
+import sys, os, traceback, time, re
 from subprocess import Popen
-import traceback
-import importlib.util
-import time
-import re
 
 rootPath = os.getcwd()
 customEnv = os.environ.copy()
@@ -14,11 +10,18 @@ for p in locpath:
     if not p in sys.path:
         sys.path.append(p)
 # import AST if exists
-if importlib.util.find_spec('AST') is not None:
+warning = ""
+try:
     from AST import *
+except:
+    warning += "Warning: AST not found. Cannot test AST!\n"
+    pass
 # import TestUtils if exists
-if importlib.util.find_spec('TestUtils') is not None:
+try:
     import TestUtils as RealTest
+except:
+    warning += "Warning: TestUtils is broken. Cannot get RealTest!\n"
+    pass
 
 def main(argv):
     if len(argv) != 1:
@@ -106,90 +109,92 @@ def checkCommon(inputStr, expectStr, testcase, outputStr=None):
         output += "=================================================\n"
         return output
 
-class TestLexer:
-    @staticmethod
-    def checkLexeme(inputStr, expectStr, testcase):
-        try:
-            RealTest.TestLexer.checkLexeme(inputStr, expectStr, testcase)
-        except:
-            track = traceback.format_exc()
-            return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
-        return checkCommon(inputStr, expectStr, testcase)
+class TestUtils:
+    class TestLexer:
+        @staticmethod
+        def checkLexeme(inputStr, expectStr, testcase):
+            try:
+                RealTest.TestLexer.checkLexeme(inputStr, expectStr, testcase)
+            except:
+                track = traceback.format_exc()
+                return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
+            return checkCommon(inputStr, expectStr, testcase)
 
-class TestParser:
-    @staticmethod
-    def checkParser(inputStr, expectStr, testcase):
-        try:
-            RealTest.TestParser.checkParser(inputStr, expectStr, testcase)
-        except:
-            track = traceback.format_exc()
-            return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
-        return checkCommon(inputStr, expectStr, testcase)
+    class TestParser:
+        @staticmethod
+        def checkParser(inputStr, expectStr, testcase):
+            try:
+                RealTest.TestParser.checkParser(inputStr, expectStr, testcase)
+            except:
+                track = traceback.format_exc()
+                return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
+            return checkCommon(inputStr, expectStr, testcase)
 
-class TestAST:
-    @staticmethod
-    def checkASTGen(inputStr, expectStr, testcase):
-        try:
-            RealTest.TestAST.checkASTGen(inputStr, expectStr, testcase)
-        except:
-            track = traceback.format_exc()
-            return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
-        return checkCommon(inputStr, str(expectStr), testcase)
+    class TestAST:
+        @staticmethod
+        def checkASTGen(inputStr, expectStr, testcase):
+            try:
+                RealTest.TestAST.checkASTGen(inputStr, expectStr, testcase)
+            except:
+                track = traceback.format_exc()
+                return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
+            return checkCommon(inputStr, str(expectStr), testcase)
 
 def test(testName, useAsRun=False):
-    if useAsRun:
-        log = open(testName+".log","w")
-        Popen(["python","run.py","test",testName], stdout=log, env=customEnv).wait()
-        log.close()
-        log = open(testName+".log","r")
-        print(log.read())
-        log.close()
-        return
     oldStdout = sys.stdout
-    log = open(testName+".log","w")
+    log = open(testName+".log","w+")
     sys.stdout = log
-
-    start = time.time()
-    unittest.TestCase.unitCount = 0
-    unittest.TestCase.successCount = 0
-    testSuiteClass = "class " + testName + ": pass"
-    with open(rootPath + "/test/" + testName + ".py") as f:
-        s = f.read()
-        beginClass = s.find("class " + testName)
-        testSuiteClass = s[beginClass:]
-    exec(testSuiteClass)
-    testSuite = eval(testName+"()")
-    testList = [method for method in dir(eval(testName)) if method.startswith("test") is True]
-    # print test debug
-    for test in testList:
-        getattr(testSuite, test)()
-    end = time.time()
-    # print runtime
-    errorCount = unittest.TestCase.unitCount - unittest.TestCase.successCount
-    if errorCount == 0:
-        print(bcolors.OKGREEN, end='')
-    else:
-        print(bcolors.FAIL, end='')
-        print("------------------------------------------------------------------")
-    print("Ran "+str(unittest.TestCase.unitCount)+" test in "+"{0:.3f}s".format(end-start))
-    print()
-    if errorCount == 0:
-        print("OK")
-    else:
-        print("FAILED (errors="+str(errorCount)+")")
-    print(bcolors.ENDC, end='')
-
-    log.close()
-    sys.stdout = oldStdout
-    log = open(testName+".log","r")
-    logPrint = log.read()
-    print(logPrint)
-    log.close()
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    result = ansi_escape.sub('', logPrint)
-    log = open(testName+".log","w")
-    log.write(result)
-    log.close()
+    try:
+        print(bcolors.WARNING+warning+bcolors.ENDC)
+        if useAsRun:
+            Popen(["python","run.py","test",testName], stderr=log, env=customEnv).wait()
+        else:
+            start = time.time()
+            unittest.TestCase.unitCount = 0
+            unittest.TestCase.successCount = 0
+            #testSuiteClass = "class " + testName + ": pass"
+            #with open(rootPath + "/test/" + testName + ".py") as f:
+            #    s = f.read()
+            #    beginClass = s.find("class " + testName)
+            #    testSuiteClass = s[beginClass:]
+            #exec(testSuiteClass)
+            sys.modules["unittest"] = unittest
+            sys.modules["TestUtils"] = TestUtils
+            exec("from "+testName+" import "+testName)
+            testSuite = eval(testName+"()")
+            testList = [method for method in dir(eval(testName)) if method.startswith("test") is True]
+            # print test debug
+            for test in testList:
+                getattr(testSuite, test)()
+            end = time.time()
+            # print runtime
+            errorCount = unittest.TestCase.unitCount - unittest.TestCase.successCount
+            if errorCount == 0:
+                print(bcolors.OKGREEN, end='')
+            else:
+                print(bcolors.FAIL, end='')
+                print("------------------------------------------------------------------")
+            print("Ran "+str(unittest.TestCase.unitCount)+" test in "+"{0:.3f}s".format(end-start))
+            print()
+            if errorCount == 0:
+                print("OK")
+            else:
+                print("FAILED (errors="+str(errorCount)+")")
+            print(bcolors.ENDC, end='')
+    except:
+        track = traceback.format_exc()
+        print(track)
+    finally:
+        sys.stdout = oldStdout
+        log.seek(0)
+        logPrint = log.read()
+        print(logPrint, end="")
+        log.close()
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        result = ansi_escape.sub('', logPrint)
+        log = open(testName+".log","w")
+        log.write(result)
+        log.close()
 
 
 def printUsage():
