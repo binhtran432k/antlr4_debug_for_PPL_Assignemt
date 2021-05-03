@@ -5,12 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Debug ASTGenSuite",
+            "name": "Antlr4: Debug ANTLR4 grammar",
+            "type": "antlr-debug",
+            "request": "launch",
+            "input": "${workspaceFolder}/input.txt",
+            "grammar": "${workspaceFolder}/main/csel/parser/CSEL.g4",
+            //"actionFile": "${workspaceFolder}/main/csel/parser/lexererr.py",
+            "startRule": "program",
+            "printParseTree": true,
+            "visualParseTree": true
+        },
+        {
+            "name": "Python: Debug LexerSuite",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/debug.py",
             "console": "integratedTerminal",
-            "args": ["ast"]
+            "args": ["lexer"]
         },
         {
             "name": "Python: Debug ParserSuite",
@@ -21,12 +32,12 @@
             "args": ["parser"]
         },
         {
-            "name": "Python: Debug LexerSuite",
+            "name": "Python: Debug ASTGenSuite",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/debug.py",
             "console": "integratedTerminal",
-            "args": ["lexer"]
+            "args": ["ast"]
         }
     ]
 }
