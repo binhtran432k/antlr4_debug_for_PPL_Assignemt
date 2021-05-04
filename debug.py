@@ -117,7 +117,8 @@ class TestUtils:
                 RealTest.TestLexer.checkLexeme(inputStr, expectStr, testcase)
             except:
                 track = traceback.format_exc()
-                return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
+                print(checkCommon(inputStr, str(expectStr), testcase, track))
+                raise
             return checkCommon(inputStr, expectStr, testcase)
 
     class TestParser:
@@ -127,7 +128,8 @@ class TestUtils:
                 RealTest.TestParser.checkParser(inputStr, expectStr, testcase)
             except:
                 track = traceback.format_exc()
-                return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
+                print(checkCommon(inputStr, str(expectStr), testcase, track))
+                raise
             return checkCommon(inputStr, expectStr, testcase)
 
     class TestAST:
@@ -137,7 +139,8 @@ class TestUtils:
                 RealTest.TestAST.checkASTGen(inputStr, expectStr, testcase)
             except:
                 track = traceback.format_exc()
-                return checkCommon(inputStr, str(expectStr), testcase, outputStr=track)
+                print(checkCommon(inputStr, str(expectStr), testcase, track))
+                raise
             return checkCommon(inputStr, str(expectStr), testcase)
 
 def test(testName, useAsRun=False):
@@ -181,17 +184,18 @@ def test(testName, useAsRun=False):
             else:
                 print("FAILED (errors="+str(errorCount)+")")
             print(bcolors.ENDC, end='')
+        track = ""
     except:
         track = traceback.format_exc()
-        print(track)
+        raise
     finally:
         sys.stdout = oldStdout
         log.seek(0)
         logPrint = log.read()
-        print(logPrint, end="")
+        print(logPrint, end='')
         log.close()
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        result = ansi_escape.sub('', logPrint)
+        result = ansi_escape.sub('', logPrint + track)
         log = open(testName+".log","w")
         log.write(result)
         log.close()

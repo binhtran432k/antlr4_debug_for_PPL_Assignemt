@@ -38,6 +38,30 @@
             "program": "${workspaceFolder}/debug.py",
             "console": "integratedTerminal",
             "args": ["ast"]
+        },
+        {
+            "name": "Python: Debug Only LexerSuite",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug.py",
+            "console": "integratedTerminal",
+            "args": ["onlylexer"]
+        },
+        {
+            "name": "Python: Debug Only ParserSuite",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug.py",
+            "console": "integratedTerminal",
+            "args": ["onlyparser"]
+        },
+        {
+            "name": "Python: Debug Only ASTGenSuite",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug.py",
+            "console": "integratedTerminal",
+            "args": ["onlyast"]
         }
     ]
 }
