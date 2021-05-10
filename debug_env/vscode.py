@@ -11,7 +11,8 @@ def getOption(testName, command, isOnly):
         "console": "integratedTerminal",
         "args": [f"{command}"]
     }
-def generateDebug(languageName):
+def generateDebug():
+    from .settings import languageName
     extraPaths = [
         f"${{workspaceFolder}}/src/main/{languageName}/astgen",
         f"${{workspaceFolder}}/src/main/{languageName}/checker",

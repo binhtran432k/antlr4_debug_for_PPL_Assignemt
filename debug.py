@@ -10,14 +10,7 @@ os.environ["ANTLR_JAR"] = rootPath + "/debug_env/antlr-4.8-complete.jar"
 workPath = rootPath+"/src/"
 os.chdir(workPath)
 
-languageName = 'csel'
-locpath = [
-    f'./main/{languageName}/parser/',
-    f'./main/{languageName}/astgen/',
-    f'./main/{languageName}/utils/',
-    './test/',
-    f'../target/main/{languageName}/parser'
-]
+from debug_env.settings import locpath
 for p in locpath:
     p = workPath+p
     if not p in sys.path:
@@ -59,7 +52,7 @@ def main(argv):
                 run(['test','ASTGenSuite'])
         elif argv[0] == 'vscode':
             from debug_env.vscode import generateDebug
-            generateDebug(languageName)
+            generateDebug()
         else:
             printUsage()
 

@@ -1,17 +1,17 @@
 from .bcolors import bcolors
 import traceback
 
-class RealTest: pass
+from os import getcwd
+workPath = getcwd()
+
 # import TestUtils if exists
 try:
     import TestUtils
     RealTest = TestUtils
 except:
     print(bcolors.WARNING+"Warning: TestUtils is broken. Cannot get RealTest!"+bcolors.ENDC)
+    class RealTest: pass
     pass
-
-from os import getcwd
-workPath = getcwd()
 
 def checkCommon(inputStr, expectStr, testcase, outputStr=None):
     if outputStr == None:
