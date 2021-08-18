@@ -1,4 +1,5 @@
 import json, os
+from os.path import normpath
 def getOption(testName, command, isOnly):
     if isOnly:
         testName = "Only "+testName
@@ -7,21 +8,14 @@ def getOption(testName, command, isOnly):
         "name": f"Python: Debug {testName}",
         "type": "python",
         "request": "launch",
-        "program": "${workspaceFolder}/debug.py",
+        "program": "${workspaceFolder}"+os.path.normpath("/debug.py"),
         "console": "integratedTerminal",
         "args": [f"{command}"]
     }
 def generateDebug():
-    from .settings import languageName
-    extraPaths = [
-        f"${{workspaceFolder}}/src/main/{languageName}/astgen",
-        f"${{workspaceFolder}}/src/main/{languageName}/checker",
-        f"${{workspaceFolder}}/src/main/{languageName}/parser",
-        f"${{workspaceFolder}}/src/main/{languageName}/utils",
-        f"${{workspaceFolder}}/src/test",
-        f"${{workspaceFolder}}/debug_env",
-        f"${{workspaceFolder}}/target/main/{languageName}/parser"
-    ]
+    from .settings import languageName, locpath
+    extraPaths = ["${workspaceFolder}" + os.path.normpath("/src/" + x) for x in locpath]
+    extraPaths.append("${workspaceFolder}"+os.path.normpath("/debug_env/"))
     settings = {
         "python.autoComplete.extraPaths": extraPaths,
         "python.analysis.extraPaths": extraPaths,
@@ -34,8 +28,8 @@ def generateDebug():
                 "name": "Antlr4: Debug ANTLR4 grammar",
                 "type": "antlr-debug",
                 "request": "launch",
-                "input": "${workspaceFolder}/input.txt",
-                "grammar": f"${{workspaceFolder}}/src/main/{languageName}/parser/{languageName.upper()}.g4",
+                "input": "${workspaceFolder}"+os.path.normpath("/input.txt"),
+                "grammar": "${workspaceFolder}"+os.path.normpath(f"/src/main/{languageName}/parser/{languageName.upper()}.g4"),
                 "startRule": "program",
                 "printParseTree": True,
                 "visualParseTree": True
@@ -43,8 +37,8 @@ def generateDebug():
         ]
     }
 
-    testNameList = ["LexerSuiet","ParserSuite","ASTGenSuite"]
-    commandList = ["lexer","parser","ast"]
+    testNameList = ["LexerSuiet","ParserSuite","ASTGenSuite","CheckSuite"]
+    commandList = ["lexer","parser","ast","check"]
     testList = list(map(lambda x, y: (x, y), testNameList, commandList))
     typList = [False,True]
     for typ in typList:

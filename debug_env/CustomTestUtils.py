@@ -62,3 +62,20 @@ class CustomTestUtils:
                 print(checkCommon(inputStr, str(expectStr), testcase, track))
                 raise
             return checkCommon(inputStr, str(expectStr), testcase)
+    class TestChecker:
+        @staticmethod
+        def test(input,expect,num):
+            return CustomTestUtils.TestChecker.checkStatic(input,expect,num)
+        @staticmethod
+        def checkStatic(input, expectStr, testcase):
+            if type(input) is str:
+                inputStr = input
+            else:
+                inputStr = str(input)
+            try:
+                RealTest.TestChecker.test(input, expectStr, testcase)
+            except:
+                track = traceback.format_exc()
+                print(checkCommon(inputStr, str(expectStr), testcase, track))
+                raise
+            return checkCommon(inputStr, str(expectStr), testcase)

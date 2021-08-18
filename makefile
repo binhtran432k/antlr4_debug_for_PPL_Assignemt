@@ -14,3 +14,7 @@ onlyast:
 	@python debug.py onlyast
 clean:
 	python debug.py clean
+zip:
+	mkdir -p submit
+	cp ./src/test/CheckSuite.py ./submit/
+	cp ./src/main/csel/checker/StaticCheck.py ./submit/

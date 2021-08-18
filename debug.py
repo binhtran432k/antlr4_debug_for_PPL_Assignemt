@@ -21,7 +21,7 @@ from debug_env.CustomTestUtils import CustomTestUtils
 
 def main(argv):
     if (len(argv) == 1 and argv[0] in ["gen","clean"]) or (len(argv) == 2 and argv[0] == "test"
-    and (argv[1] in ["LexerSuite","ParserSuite","ASTGenSuite"])):
+    and (argv[1] in ["LexerSuite","ParserSuite","ASTGenSuite","CheckSuite"])):
         from src.run import main as run
         run(argv)
         if (argv[0] == "clean"):
@@ -50,6 +50,12 @@ def main(argv):
                 subRun(["python","../debug.py","onlyast"])
             else:
                 run(['test','ASTGenSuite'])
+        elif argv[0] in ['check','onlycheck']:
+            if argv[0] == 'check':
+                run(['gen'])
+                subRun(["python","../debug.py","onlycheck"])
+            else:
+                run(['test','CheckSuite'])
         elif argv[0] == 'vscode':
             from debug_env.vscode import generateDebug
             generateDebug()
@@ -63,13 +69,16 @@ def printUsage():
     print("python debug.py test LexerSuite")
     print("python debug.py test ParserSuite")
     print("python debug.py test ASTGenSuite")
+    print("python debug.py test CheckSuite")
     print("-------Customize-------")
     print("python debug.py lexer")
     print("python debug.py parser")
     print("python debug.py ast")
+    print("python debug.py check")
     print("python debug.py onlylexer")
     print("python debug.py onlyparser")
     print("python debug.py onlyast")
+    print("python debug.py onlycheck")
     print("-------Vscode Debug and Hint-------")
     print("python debug.py vscode")
 
